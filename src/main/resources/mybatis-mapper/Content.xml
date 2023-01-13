@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="com.hsl.sns.dao.IDao">
+	<resultMap type="com.hsl.sns.dto.PostDto" id="PostDto">
+		<result property="postidx" column="postidx"/>
+		<result property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="type" column="type"/>
+		<result property="price" column="price"/>
+		<result property="tradeplace" column="tradeplace"/>
+		<result property="content" column="content"/>
+		<result property="createdate" column="createdate"/>
+		<result property="nick" column="nick"/>
+		<result property="buyuser" column="buyuser"/>
+		<result property="buyflag" column="buyflag"/>
+		<result property="sellflag" column="sellflag"/>
+		<result property="profileName" column="profileName"/>
+		<result property="hopedate" column="hopedate"/>
+		
+	</resultMap>
+	
+	<resultMap type="com.hsl.sns.dto.PostingUrlDto" id="PostingUrlDto2">
+		<result property="postingimgurlidx" column="postingimgurlidx"/>
+		<result property="postidx" column="postidx"/>
+		<result property="fileOriName" column="fileOriName"/>
+		<result property="fileName" column="fileName"/>
+		<result property="fileExtension" column="fileExtension"/>
+		<result property="fileUrl" column="fileUrl"/>
+		<result property="createdate" column="createdate"/>
+		<result property="updatedate" column="updatedate"/>
+		<result property="createTime" column="createTime"/>	
+
+		<collection property="postDto" resultMap="PostDto"></collection>
+	</resultMap>
+	
+	<resultMap type="com.hsl.sns.dto.MemberDto" id="MemberDto">
+		<result property="id" column="id"/>
+		<result property="pwd" column="pwd"/>
+		<result property="name" column="name"/>
+		<result property="birth" column="birth"/>
+		<result property="mail" column="mail"/>
+		<result property="phone" column="phone"/>
+		<result property="nick" column="nick"/>
+		<result property="rdate" column="rdate"/>
+		<result property="greet" column="greet"/>
+		<result property="profileName" column="profileName"/>
+		<result property="profileUrl" column="profileUrl"/>
+		<result property="fileExtension" column="fileExtension"/>
+		<result property="point" column="point"/>	
+
+		<collection property="postDto" resultMap="PostDto"></collection>
+	</resultMap>
+	
+	<resultMap type="com.hsl.sns.dto.FollowDto" id="FollowDto">
+		<result property="followidx" column="followidx"/>
+		<result property="followcontent" column="followcontent"/>
+		<result property="followid" column="followid"/>
+
+		<collection property="postDto" resultMap="PostDto"></collection>
+	</resultMap>
+
+
+	
+	<!-- contnetWrite -->
+	<insert id="contentWriteContDao">
+		INSERT INTO post (postidx, title, type, price, tradeplace,content, id) 
+			VALUES (post_seq.nextval, #{param1}, #{param2},#{param3},#{param4},#{param5},#{param6})
+			
+			 
+	</insert>	
+		
+	<insert id="contentWritePicDao">	
+		INSERT INTO posturl (postingimgurlidx, postidx, fileOriName, fileName, fileExtension, fileUrl) 
+			VALUES (postingurl_seq.nextval,#{param1},#{param2},#{param3},#{param4},#{param5})
+	</insert>
+	
+	<select id="postInfoDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT * FROM post WHERE id=#{param1} ORDER BY postidx DESC
+	</select>
+	
+	<!-- 구매 스케쥴 -->
+	<select id="scheduler" resultType="com.hsl.sns.dto.PostDto">
+		SELECT p.*,u.nick FROM post p JOIN user_sns u ON p.id = u.id WHERE p.buyuser=#{param1} AND (p.buyflag !=0 AND p.sellflag!=0)
+	</select>
+	
+	<!-- 판매 스케쥴 -->
+	<select id="schedulerSell" resultType="com.hsl.sns.dto.PostDto">
+		SELECT p.*,u.nick FROM post p JOIN user_sns u ON p.id = u.id WHERE p.id=#{param1} AND (p.buyflag !=0 AND p.sellflag!=0)
+	</select>
+	
+
+	<!-- index -->
+	<select id="postListDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT p.*,u.nick, u.profilename FROM post p JOIN user_sns u ON p.id = u.id ORDER BY p.postidx DESC
+	</select>
+	<select id="postUrlListDao" resultType="com.hsl.sns.dto.PostingUrlDto">
+		SELECT r.*, p.*FROM posturl r, post p
+		WHERE r.postidx = p.postidx
+		
+	</select>
+	<select id="postViewDao" parameterType="com.hsl.sns.dto.PostingUrlDto" resultMap="PostingUrlDto2">
+		SELECT r.*, p.*,u.nick FROM posturl r, post p, user_sns u
+		WHERE r.postidx = p.postidx
+		AND  p.id= u.id ORDER BY p.postidx
+	</select>
+	
+	<!-- tradeView 정보 불러오기 -->
+	<select id="postInfomationDao" parameterType="com.hsl.sns.dto.MemberDto" resultMap="MemberDto">
+		SELECT u.* ,p.* FROM user_sns u LEFT JOIN post p ON u.id = p.id WHERE postidx=#{param1}
+	</select>
+	
+
+	<!-- 찜,구매,판매 썸네일 이미지 하나만 가져오기 -->
+	<select id="myPostUrlListDao" parameterType="com.hsl.sns.dto.PostingUrlDto" resultMap="PostingUrlDto2">
+		SELECT p.postidx,max(u.filename) as filename FROM posturl u INNER JOIN post p ON p.postidx = u.postidx GROUP BY p.postidx
+	</select>
+	
+	<!-- content_view 정보 띄우기 -->
+	<select id="postDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT p.*, u.nick, u.profilename FROM post p join user_sns u ON p.id = u.id WHERE postidx=${param1}
+	</select>
+	
+	<select id="dateDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT postidx, TRUNC(sysdate)-TO_DATE(TO_CHAR(createdate,'YY-MM-DD'),'YY-MM-DD') as createdate FROM post
+	</select>
+	
+	<!-- 검색 -->
+	<select id="postSearchDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT p.*,u.nick,u.profilename FROM post p JOIN user_sns u ON p.id = u.id WHERE tradeplace LIKE '%' || #{param1} || '%' 
+		AND type LIKE '%' || #{param2} || '%' ORDER BY postidx DESC
+	</select>
+	
+	<!-- 댓글관련 -->
+	<insert id="commentDao">
+		INSERT INTO commentTBL(commentidx, id, postidx, content) 
+			VALUES (commentTBL_seq.nextval, #{param1}, #{param2},#{param3})
+	</insert>
+	
+	<select id="commentViewDao" resultType="com.hsl.sns.dto.PostDto">
+		SELECT * FROM post WHERE postidx=#{param1}
+	</select>
+	
+	<select id="commentListDao" resultType="com.hsl.sns.dto.CommentDto">
+		SELECT c.*,u.nick FROM commentTBL c JOIN user_sns u ON c.id = u.id WHERE postidx=#{param1} ORDER BY commentidx ASC
+	</select>
+	
+	
+	
+
+	<update id="buycompleteDao"> <!-- 구매완료 -->
+		UPDATE post SET buyuser=#{param2}, hopedate=TO_TIMESTAMP(#{param3},'YY-MM-DD HH24:MI'), buyflag=buyflag+1 WHERE postidx=${param1} 
+	</update>
+	
+	<select id="selltradeDao" parameterType="com.hsl.sns.dto.MemberDto" resultMap="MemberDto"> <!-- sell trade내 구매자 정보 -->
+		SELECT u.* ,p.buyuser FROM user_sns u LEFT JOIN post p ON u.id = p.buyuser WHERE postidx=${param1}
+	</select>
+	
+	<update id="sellcompleteDao"> <!-- 판매완료 -->
+		UPDATE post SET  sellflag=sellflag+1 WHERE postidx=${param1}
+	</update>
+	
+	<select id="myPostListDao" resultType="com.hsl.sns.dto.PostDto"> <!-- 판매중 리스트 -->
+		SELECT p.*,u.nick FROM post p JOIN user_sns u ON p.id=u.id WHERE p.id=#{param1} AND (sellflag=0) order  by postidx desc
+	</select>
+	
+	<select id="postCountDao" resultType="int"> <!-- 판매중 카운트 -->
+		SELECT count(*) FROM post WHERE id=#{param1} AND (sellflag=0)
+	</select>
+	
+	<select id="buyListDao" resultType="com.hsl.sns.dto.PostDto"> <!-- 예약중 리스트 -->
+		SELECT p.*,u.nick FROM post p JOIN user_sns u ON p.id=u.id WHERE p.buyuser=#{param1} AND (p.buyflag !=0 AND p.sellflag=0)order  by postidx desc
+	</select>
+	
+	<select id="buyCountDao" resultType="int">  <!--예약중 카운트 -->
+		SELECT count(*) FROM post WHERE buyuser=#{param1} AND (buyflag !=0 AND sellflag=0)
+	</select> 
+	
+	
+	<select id="likeContentListDao" parameterType="com.hsl.sns.dto.FollowDto" resultMap="FollowDto"> <!-- 찜한 게시물 목록  -->
+		SELECT * FROM follow f LEFT JOIN 
+		(SELECT post.*,user_sns.nick FROM post JOIN user_sns ON post.id = user_sns.id) p 
+		ON f.followcontent = p.postidx WHERE followid=#{param1} AND p.id NOT IN #{param1} AND (buyflag =0 AND sellflag =0) order  by postidx desc
+	</select>
+	
+	<select id="transactionListDao" resultType="com.hsl.sns.dto.PostDto"> <!-- 거래완료 리스트 -->
+		SELECT p.*,u.nick FROM post p JOIN user_sns u ON p.id = u.id WHERE (p.buyuser =#{param1} OR p.id =#{param1}) AND (p.buyflag !=0 AND p.sellflag!=0) order  by postidx desc
+	</select>
+	
+	<select id="transactionCountDao" resultType="int"> <!--거래완료 카운트 -->
+		SELECT count(*) FROM post WHERE (buyuser =#{param1} OR id =#{param1}) AND (buyflag!=0 AND sellflag!=0)
+	</select>
+	
+	<select id="buyrequestCountDao" resultType="int">  <!--예약중 카운트 -->
+		SELECT count(*) FROM post WHERE id=#{param1} AND (buyflag !=0 AND sellflag=0)
+	</select> 
+	
+	
+	
+
+	<!-- modify 해당 게시글 사진가져오기 -->
+	<select id="getPosturlModifyDao" resultType="com.hsl.sns.dto.PostingUrlDto">
+		SELECT * FROM posturl WHERE postidx = ${param1}
+	</select>
+	
+	<update id="modifyPostDao" >
+		UPDATE post SET title=#{param1}, type=#{param2}, price=#{param3}, tradeplace=#{param4}, content=#{param5} WHERE postidx = ${param6}
+	</update>
+	
+	<delete id="deletePostDao">
+		DELETE FROM post WHERE postidx=${param1}
+	</delete>
+	
+	<update id="buyCancleDao">
+		UPDATE post set buyuser= null ,buyflag=0, hopedate= null where postidx=#{param1}
+	</update>
+	
+	
+	<!--  댓글 좋아요 -->
+	<select id="CommentLikeOkDao" resultType="int">
+		SELECT count(*) FROM commentlike where commentidx = #{param1}
+	</select>
+</mapper>
+	

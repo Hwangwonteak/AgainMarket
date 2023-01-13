@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="com.hsl.sns.dao.IDao">
+	
+
+	<insert id="joinMemberDao">
+		INSERT INTO user_sns(id, pwd, name, birth, mail, phone, nick, greet)  
+		VALUES(#{param1},#{param2},#{param3},#{param4},#{param5},#{param6},#{param7},#{param8})
+	</insert>
+	
+	<select id="memberInfoDao" resultType="com.hsl.sns.dto.MemberDto">
+		SELECT * FROM user_sns WHERE id=#{param1}
+	</select>
+	
+	<select id="memberInfoDaoNick" resultType="com.hsl.sns.dto.MemberDto">
+		SELECT * FROM user_sns WHERE nick=#{param1}
+	</select>
+	
+	<select id="memberListDao" resultType="com.hsl.sns.dto.MemberDto">
+		SELECT * FROM user_sns WHERE id NOT IN (#{param1}) AND id NOT IN ('admin')
+	</select>
+	
+	
+	
+	<update id="memberModifyDao">
+		UPDATE user_sns SET name=#{param2}, mail=#{param3}, nick=#{param4}, phone=#{param5}, greet=#{param6} WHERE id=#{param1}
+	</update>
+	
+	<update id="messageModifyDao">
+		UPDATE message SET sendnick=#{param2} WHERE sendnick=#{param1}
+	</update>
+	
+	<update id="messageModifyDao1">
+		UPDATE message SET recvnick=#{param2} WHERE recvnick=#{param1}
+	</update>
+	
+	<update id="profileModifyDao">
+		UPDATE user_sns SET profilename=#{param2}, profileurl=#{param3}, fileextension=#{param4} WHERE id=#{param1}
+	</update>
+	
+	<delete id="memberDeleteDao">
+		DELETE FROM user_sns WHERE id=#{param1}
+	</delete>
+	
+	<delete id="messageDeleteDao">
+		DELETE FROM message WHERE sendnick=#{param1} OR recvnick=#{param1}
+	</delete>
+	
+	<select id="findIdDao" resultType="com.hsl.sns.dto.MemberDto">
+		SELECT id FROM user_sns WHERE name=#{param1} AND  mail=#{param2} AND phone=#{param3}
+	</select>
+	
+	<select id="findPwDao" resultType="com.hsl.sns.dto.MemberDto">
+		SELECT pwd FROM user_sns WHERE name=#{param1} AND  mail=#{param2} AND phone=#{param3} AND id=#{param4}
+	</select>
+	
+	
+	
+	<!-- 포인트 -->
+	<update id="pointPlus">
+		UPDATE user_sns SET point=point+${param1} WHERE id=#{param2}
+	</update>
+	
+	<update id="pointMinus">
+		UPDATE user_sns SET point=point-${param1} WHERE id=#{param2}
+	</update>
+	
+	<insert id="pointPlusDao">
+		INSERT INTO pointtbl(pointidx,id,pluspoint,currentpoint,explain) VALUES(point_seq.nextval,#{param1},${param2},${param3},#{param4})
+	</insert>
+	
+	<insert id="pointMinusDao">
+		INSERT INTO pointtbl(pointidx,id,minuspoint,currentpoint,explain) VALUES(point_seq.nextval,#{param1},${param2},${param3},#{param4})
+	</insert>	
+	
+	<select id="pointListDao" resultType="com.hsl.sns.dto.PointDto">
+		SELECT * FROM 
+			(SELECT A.*,Floor((ROWNUM-1)/${param2}+1)PAGE,ROWNUM
+			FROM
+			(SELECT * FROM pointtbl WHERE id=#{param1} ORDER BY pointidx DESC)A)
+		WHERE PAGE=#{param3}
+	</select>	
+	
+	<select id="pointListAllCount" resultType="int">
+		SELECT count(*) FROM pointtbl WHERE id=#{param1} 
+	</select>
+	
+	
+	<!-- 포인트 샵 -->
+	<insert id="shopWriteDao">
+		INSERT INTO pointshop_post (shopidx, title, content, spoint, filename,fileurl, fileextension) 
+			VALUES (pointshop_post_seq.nextval, #{param1}, #{param2},#{param3},#{param4},#{param5},#{param6})
+	</insert>
+	
+	<select id="shopListDao" resultType="com.hsl.sns.dto.ShopPostDto">
+		SELECT * FROM pointshop_post ORDER BY shopidx DESC
+	</select>
+	<select id="shopTrade" resultType="com.hsl.sns.dto.ShopPostDto">
+		SELECT * FROM pointshop_post WHERE shopidx=#{param1}
+	</select>
+	<update id="shopModifyDao">
+		UPDATE pointshop_post SET title=#{param2}, content=#{param3}, spoint=${param4} WHERE shopidx=${param1}
+	</update>
+	<delete id="shopDeleteDao">
+		DELETE FROM pointshop_post WHERE shopidx=${param1}
+	</delete>
+	
+	<!-- 관리자 포인트샵 -->
+	
+	<insert id="pointProductDao">
+		INSERT INTO pointproduct (productidx, title, id, productaddress, phone) 
+			VALUES (product_seq.nextval, #{param1}, #{param2},#{param3},#{param4})
+	</insert>
+	<select id="productListDao" resultType="com.hsl.sns.dto.ProductDto">
+		SELECT * FROM 
+			(SELECT A.*,Floor((ROWNUM-1)/${param1}+1)PAGE,ROWNUM
+			FROM
+			(SELECT * FROM pointproduct ORDER BY productidx DESC)A)
+		WHERE PAGE=#{param2}
+		
+	</select>
+	<select id="productCountDao" resultType="int">
+		SELECT COUNT(*) FROM pointproduct 
+	</select>
+</mapper>
+	
+	
